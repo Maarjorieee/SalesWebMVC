@@ -29,7 +29,7 @@ namespace SalesWebMVC.Services
 
         public Seller FindByID(int id)
         {
-            return _context.Seller.Include(obj => obj.Department).FirstOrDefault(obj => obj.Id == id);
+            return _context.Seller.Include(obj => obj.Department).FirstOrDefault(obj => obj.id == id);
         }
 
         public void Remove(int id)
@@ -40,7 +40,7 @@ namespace SalesWebMVC.Services
         }
         public void Update(Seller obj)
         {
-            if (!_context.Seller.Any(x => x.Id == obj.Id))
+            if (!_context.Seller.Any(x => x.id == obj.id))
             {
                 throw new NotFoundException("Id Not Found!");
             }

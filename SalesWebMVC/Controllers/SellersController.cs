@@ -5,137 +5,145 @@ using System.Collections.Generic;
 using SalesWebMVC.Models.ViewModels;
 using System.Security.Cryptography.X509Certificates;
 using SalesWebMVC.Services.Exceptions;
+using System.Diagnostics;
+using System;
 
-namespace SalesWebMVC.Controllers
-{
-    public class SellersController : Controller
+    namespace SalesWebMVC.Controllers
     {
-
-        private readonly SellerService _sellerService;
-        private readonly DepartmentService _departmentService;
-
-        public SellersController(SellerService sellerService, DepartmentService departmentService)
+        public class SellersController : Controller
         {
-            _sellerService = sellerService;
-            _departmentService = departmentService;
-        }
 
-        public IActionResult Index()
-        {
-            var list = _sellerService.FindAll();
+            private readonly SellerService _sellerService;
+            private readonly DepartmentService _departmentService;
 
-            return View(list);
-        }
-
-        public IActionResult Create()
-        {
-            var departments = _departmentService.FindAll();
-            var viewModel = new SellerFormViewModel { Departments = departments };
-
-            return View(viewModel);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Create(Seller seller)
-        {
-            _sellerService.Insert(seller);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public IActionResult Delete(int? id)
-        {
-            if (id == null)
+            public SellersController(SellerService sellerService, DepartmentService departmentService)
             {
-                return NotFound();
+                _sellerService = sellerService;
+                _departmentService = departmentService;
             }
 
-
-            var obj = _sellerService.FindByID(id.Value);
-            if (obj == null)
+            public IActionResult Index()
             {
-                return NotFound();
+                var list = _sellerService.FindAll();
+
+                return View(list);
             }
 
-            return View(obj);
-
-            }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-
-        public IActionResult Delete(int id)
-        {
-            _sellerService.Remove(id);
-            return RedirectToAction(nameof(Index));
-        }
-
-        public  IActionResult Details (int ? id)
-        {
-            if (id == null)
+            public IActionResult Create()
             {
-                return NotFound();
+                var departments = _departmentService.FindAll();
+                var viewModel = new SellerFormViewModel { Departments = departments };
+
+                return View(viewModel);
             }
 
-
-            var obj = _sellerService.FindByID(id.Value);
-            if (obj == null)
+            [HttpPost]
+            [ValidateAntiForgeryToken]
+            public IActionResult Create(Seller seller)
             {
-                return NotFound();
-            }
-
-            { 
-            return View(obj);
-            }
-
-            
-        }
-
-        public IActionResult Edit(int? id)
-
-        {
-            if(id == null)
-            {
-                return NotFound();
-            }
-
-            var obj = _sellerService.FindByID(id.Value);    
-            if(obj == null)
-            {
-                return NotFound();
-            }
-
-            List<Department> departments = _departmentService.FindAll();
-            SellerFormViewModel viewModel = new SellerFormViewModel { Seller = obj, Departments = departments };
-            return View(viewModel);
-        }
-
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public IActionResult Edit(int id, Seller seller)
-        {
-            if(id != seller.Id)
-            {
-                return BadRequest();
-            }
-
-            try
-            {
-                _sellerService.Update(seller);
+                _sellerService.Insert(seller);
                 return RedirectToAction(nameof(Index));
             }
 
-            catch (NotFoundException)
+            public IActionResult Delete(int? id)
             {
-                return NotFound();
+                if (id == null)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id Not Provided" });
+                }
+
+
+                var obj = _sellerService.FindByID(id.Value);
+                if (obj == null)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id Not Found" });
+                }
+
+                return View(obj);
+
             }
-            catch (DbConcurrencyException)
+
+            [HttpPost]
+            [ValidateAntiForgeryToken]
+
+            public IActionResult Delete(int id)
             {
-                return BadRequest();
+                _sellerService.Remove(id);
+                return RedirectToAction(nameof(Index));
             }
+
+            public IActionResult Details(int? id)
+            {
+                if (id == null)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id Not Provided" });
+                }
+
+
+                var obj = _sellerService.FindByID(id.Value);
+                if (obj == null)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id Not Found" });
+                }
+
+                {
+                    return View(obj);
+                }
+
+
+            }
+
+            public IActionResult Edit(int? id)
+
+            {
+                if (id == null)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id Not Provided" });
+                }
+
+                var obj = _sellerService.FindByID(id.Value);
+                if (obj == null)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id Not Found" });
+                }
+
+                List<Department> departments = _departmentService.FindAll();
+                SellerFormViewModel viewModel = new SellerFormViewModel { Seller = obj, Departments = departments };
+                return View(viewModel);
+            }
+
+            [HttpPost]
+            [ValidateAntiForgeryToken]
+            public IActionResult Edit(int id, Seller seller)
+            {
+                if (id != seller.id)
+                {
+                    return RedirectToAction(nameof(Error), new { message = "Id mismatch" });
+                }
+
+                try
+                {
+                    _sellerService.Update(seller);
+                    return RedirectToAction(nameof(Index));
+                }
+
+                catch (ApplicationException e)
+                {
+                    return RedirectToAction(nameof(Error), new { message = e.Message });
+                }
+
+            }
+
+            public IActionResult Error(string message)
+            {
+                var viewModel = new ErrorViewModel
+                {
+                    Message = message,
+                    RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier
+                };
+
+                return View(viewModel);
+            }
+
         }
-
     }
-}
-
-
